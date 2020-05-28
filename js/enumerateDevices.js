@@ -10,39 +10,24 @@ module.exports = enumerateDevices;
 var
 	debug = require('debug')('iosrtc:enumerateDevices'),
 	exec = require('cordova/exec'),
-	MediaDeviceInfo = require('./MediaDeviceInfo');
+	MediaDeviceInfo = require('./MediaDeviceInfo'),
+	Errors = require('./Errors');
 
 
 function enumerateDevices() {
-	debug('');
 
-	var isPromise,
-		callback;
+	// Detect callback usage to assist 5.0.1 to 5.0.2 migration
+	// TODO remove on 6.0.0
+	Errors.detectDeprecatedCallbaksUsage('cordova.plugins.iosrtc.enumerateDevices', arguments);
 
-	if (typeof arguments[0] !== 'function') {
-		isPromise = true;
-	} else {
-		isPromise = false;
-		callback = arguments[0];
-	}
+	return new Promise(function (resolve) {
+		function onResultOK(data) {
+			debug('enumerateDevices() | success');
+			resolve(getMediaDeviceInfos(data.devices));
+		}
 
-	if (isPromise) {
-		return new Promise(function (resolve) {
-			function onResultOK(data) {
-				debug('enumerateDevices() | success');
-				resolve(getMediaDeviceInfos(data.devices));
-			}
-
-			exec(onResultOK, null, 'iosrtcPlugin', 'enumerateDevices', []);
-		});
-	}
-
-	function onResultOK(data) {
-		debug('enumerateDevices() | success');
-		callback(getMediaDeviceInfos(data.devices));
-	}
-
-	exec(onResultOK, null, 'iosrtcPlugin', 'enumerateDevices', []);
+		exec(onResultOK, null, 'iosrtcPlugin', 'enumerateDevices', []);
+	});
 }
 
 

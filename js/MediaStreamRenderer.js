@@ -11,7 +11,7 @@ var
 	debug = require('debug')('iosrtc:MediaStreamRenderer'),
 	exec = require('cordova/exec'),
 	randomNumber = require('random-number').generator({min: 10000, max: 99999, integer: true}),
-	EventTarget = require('yaeti').EventTarget,
+	EventTarget = require('./EventTarget'),
 	MediaStream = require('./MediaStream');
 
 
@@ -42,22 +42,31 @@ function MediaStreamRenderer(element) {
 
 	exec(onResultOK, null, 'iosrtcPlugin', 'new_MediaStreamRenderer', [this.id]);
 
-	this.refresh(this);
+	this.refresh();
+
+	// TODO cause video resizing jiggling add semaphore
+	//this.refreshInterval = setInterval(function () {
+	//	self.refresh(self);
+	//}, 500);
+
+	element.render = this;
 }
 
+MediaStreamRenderer.prototype = Object.create(EventTarget.prototype);
+MediaStreamRenderer.prototype.constructor = MediaStreamRenderer;
 
 MediaStreamRenderer.prototype.render = function (stream) {
 	debug('render() [stream:%o]', stream);
 
 	var self = this;
 
-	if (!(stream instanceof MediaStream)) {
+	if (!(stream instanceof MediaStream.originalMediaStream)) {
 		throw new Error('render() requires a MediaStream instance as argument');
 	}
 
-	this.stream = stream;
+	self.stream = stream;
 
-	exec(null, null, 'iosrtcPlugin', 'MediaStreamRenderer_render', [this.id, stream.id]);
+	exec(null, null, 'iosrtcPlugin', 'MediaStreamRenderer_render', [self.id, stream.id]);
 
 	// Subscribe to 'update' event so we call native mediaStreamChanged() on it.
 	stream.addEventListener('update', function () {
@@ -104,6 +113,24 @@ MediaStreamRenderer.prototype.render = function (stream) {
 	}
 };
 
+MediaStreamRenderer.prototype.save = function (callback) {
+	debug('save()');
+
+	if (!this.stream) {
+		callback(null);
+		return;
+	}
+
+	function onResultOK(data) {
+		callback(data);
+	}
+
+	function onResultError() {
+		callback(null);
+	}
+
+	exec(onResultOK, onResultError, 'iosrtcPlugin', 'MediaStreamRenderer_save', [this.id]);
+};
 
 MediaStreamRenderer.prototype.refresh = function () {
 	debug('refresh()');
@@ -128,7 +155,8 @@ MediaStreamRenderer.prototype.refresh = function () {
 		paddingTop,
 		paddingBottom,
 		paddingLeft,
-		paddingRight;
+		paddingRight,
+		self = this;
 
 	computedStyle = window.getComputedStyle(this.element);
 
@@ -275,14 +303,25 @@ MediaStreamRenderer.prototype.refresh = function () {
 
 	nativeRefresh.call(this);
 
+	function hash(str) {
+		var hash = 5381,
+		i = str.length;
+
+		while (i) {
+			hash = (hash * 33) ^ str.charCodeAt(--i);
+		}
+
+		return hash >>> 0;
+	}
+
 	function nativeRefresh() {
 		var data = {
-			elementLeft: elementLeft,
-			elementTop: elementTop,
-			elementWidth: elementWidth,
-			elementHeight: elementHeight,
-			videoViewWidth: videoViewWidth,
-			videoViewHeight: videoViewHeight,
+			elementLeft: Math.round(elementLeft),
+			elementTop: Math.round(elementTop),
+			elementWidth: Math.round(elementWidth),
+			elementHeight: Math.round(elementHeight),
+			videoViewWidth: Math.round(videoViewWidth),
+			videoViewHeight: Math.round(videoViewHeight),
 			visible: visible,
 			opacity: opacity,
 			zIndex: zIndex,
@@ -290,7 +329,14 @@ MediaStreamRenderer.prototype.refresh = function () {
 			objectFit: objectFit,
 			clip: clip,
 			borderRadius: borderRadius
-		};
+		},
+		newRefreshCached = hash(JSON.stringify(data));
+
+		if (newRefreshCached === self.refreshCached) {
+			return;
+		}
+
+		self.refreshCached = newRefreshCached;
 
 		debug('refresh() | [data:%o]', data);
 
@@ -308,6 +354,10 @@ MediaStreamRenderer.prototype.close = function () {
 	this.stream = undefined;
 
 	exec(null, null, 'iosrtcPlugin', 'MediaStreamRenderer_close', [this.id]);
+	if (this.refreshInterval) {
+		clearInterval(this.refreshInterval);
+		delete this.refreshInterval;
+	}
 };
 
 
@@ -326,7 +376,7 @@ function onEvent(data) {
 		case 'videoresize':
 			this.videoWidth = data.size.width;
 			this.videoHeight = data.size.height;
-			this.refresh(this);
+			this.refresh();
 
 			event = new Event(type);
 			event.videoWidth = data.size.width;

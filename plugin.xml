@@ -1,26 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
 		id="cordova-plugin-iosrtc"
-		version="4.0.2">
+		version="6.0.12">
 
 	<name>iosrtc</name>
 	<description>Cordova iOS plugin exposing the full WebRTC W3C JavaScript APIs</description>
-	<author>eFace2Face, Inc. and BasqueVoIPMafia</author>
+	<author>eFace2Face, Inc. and BasqueVoIPMafia and Cordova-RTC</author>
 	<license>MIT</license>
 	<keywords>webrtc, ios</keywords>
 
 	<info>
 		cordova-plugin-iosrtc enables use of the JavaScript WebRTC APIs (as defined by the W3C) in iOS devices.
-		Learn more at https://github.com/BasqueVoIPMafia/cordova-plugin-iosrtc
+		Learn more at https://github.com/cordova-rtc/cordova-plugin-iosrtc
 	</info>
 
 	<engines>
-		<engine name="cordova-ios" version=">=3.8.0" />
+		<engine name="cordova-ios" version=">=4.5.1" />
 	</engines>
 
 	<platform name="ios">
-		<!-- Automatically add hook -->
-		<hook type="after_platform_add" src="extra/hooks/iosrtc-swift-support.js" />
+
+		<hook type="after_prepare" src="extra/hooks/iosrtc-swift-support.js" />
 
 		<config-file target="config.xml" parent="/*">
 			<feature name="iosrtcPlugin">
@@ -31,51 +31,21 @@
 
 		<!-- Permission notes -->
 		<config-file parent="NSCameraUsageDescription" target="*-Info.plist">
-			<string>Blink uses your camera to make video calls.</string>
+			<string>This Application uses your camera to make video calls.</string>
 		</config-file>
 		<config-file parent="NSContactsUsageDescription" target="*-Info.plist">
-			<string>Blink needs access to your contacts in order to be able to call them.</string>
+			<string>This Application needs access to your contacts in order to be able to call them.</string>
 		</config-file>
 		<config-file parent="NSMicrophoneUsageDescription" target="*-Info.plist">
-			<string>Blink uses your microphone to make calls.</string>
+			<string>This Application uses your microphone to make calls.</string>
+		</config-file>
+		<config-file parent="NSBluetoothAlwaysUsageDescription" target="*-Info.plist">
+			<string>This Application uses your wireless headphones and microphone to make calls.</string>
 		</config-file>
 
 		<js-module src="dist/cordova-plugin-iosrtc.js" name="Plugin">
 			<clobbers target="cordova.plugins.iosrtc" />
 		</js-module>
-
-		<!-- WebRTC ObjetiveC headers -->
-		<header-file src="src/webrtc-headers/RTCAVFoundationVideoSource.h" />
-		<header-file src="src/webrtc-headers/RTCAudioSource.h" />
-		<header-file src="src/webrtc-headers/RTCAudioTrack.h" />
-		<header-file src="src/webrtc-headers/RTCDataChannel.h" />
-		<header-file src="src/webrtc-headers/RTCDTMFSender.h" />
-		<header-file src="src/webrtc-headers/RTCEAGLVideoView.h" />
-		<header-file src="src/webrtc-headers/RTCFileLogger.h" />
-		<header-file src="src/webrtc-headers/RTCI420Frame.h" />
-		<header-file src="src/webrtc-headers/RTCICECandidate.h" />
-		<header-file src="src/webrtc-headers/RTCICEServer.h" />
-		<header-file src="src/webrtc-headers/RTCLogging.h" />
-		<header-file src="src/webrtc-headers/RTCMediaConstraints.h" />
-		<header-file src="src/webrtc-headers/RTCMediaSource.h" />
-		<header-file src="src/webrtc-headers/RTCMediaStream.h" />
-		<header-file src="src/webrtc-headers/RTCMediaStreamTrack.h" />
-		<header-file src="src/webrtc-headers/RTCNSGLVideoView.h" />
-		<header-file src="src/webrtc-headers/RTCOpenGLVideoRenderer.h" />
-		<header-file src="src/webrtc-headers/RTCPair.h" />
-		<header-file src="src/webrtc-headers/RTCPeerConnection.h" />
-		<header-file src="src/webrtc-headers/RTCPeerConnectionDelegate.h" />
-		<header-file src="src/webrtc-headers/RTCPeerConnectionFactory.h" />
-		<header-file src="src/webrtc-headers/RTCPeerConnectionInterface.h" />
-		<header-file src="src/webrtc-headers/RTCSessionDescription.h" />
-		<header-file src="src/webrtc-headers/RTCSessionDescriptionDelegate.h" />
-		<header-file src="src/webrtc-headers/RTCStatsDelegate.h" />
-		<header-file src="src/webrtc-headers/RTCStatsReport.h" />
-		<header-file src="src/webrtc-headers/RTCTypes.h" />
-		<header-file src="src/webrtc-headers/RTCVideoCapturer.h" />
-		<header-file src="src/webrtc-headers/RTCVideoRenderer.h" />
-		<header-file src="src/webrtc-headers/RTCVideoSource.h" />
-		<header-file src="src/webrtc-headers/RTCVideoTrack.h" />
 
 		<!-- Bridging header for using ObjetiveC libraries in Swift -->
 		<header-file src="src/cordova-plugin-iosrtc-Bridging-Header.h" />
@@ -94,6 +64,8 @@
 		<source-file src="src/PluginEnumerateDevices.swift" />
 		<source-file src="src/PluginUtils.swift" />
 		<source-file src="src/PluginMediaStreamRenderer.swift" />
+		<source-file src="src/PluginRTCAudioController.swift" />
+		<source-file src="src/PluginRTCVideoCaptureController.swift" />
 
 		<!-- iOS shared dependencies -->
 		<framework src="AVFoundation.framework" />
@@ -113,8 +85,8 @@
 		<framework src="libsqlite3.0.dylib" />
 		<framework src="VideoToolbox.framework" />
 
-		<!-- WebRTC static library -->
-		<source-file src="lib/libWebRTC-LATEST-Universal-Release.a" framework="true" />
+		<!-- WebRTC library -->
+		<framework src="lib/WebRTC.framework" custom="true" embed="true" />
 	</platform>
 
 </plugin>

@@ -4,25 +4,46 @@ If your company is using *cordova-plugin-iosrtc* we would love to heard back fro
 
 Below a list of companies using *cordova-plugin-iostc*:
 
+### [263视频会议](https://www.263.net/263/videoConference/)
+
+![263视频会议-logo](https://www.263.net/r/cms/www/web2018/img/download-icon-videomeet.png)
+
+At [263视频会议](https://apps.apple.com/cn/app/263%E8%A7%86%E9%A2%91%E4%BC%9A%E8%AE%AE/id1361487536) we use **cordova-plugin-iosrtc** for the iOS version of our application, becoming a web/mobile/tablet HTML5 hybrid solution.
+
+### [ConnectyCube](https://connectycube.com)
+
+![ConnectyCube Logo](https://connectycube.com/imgs/connectycube_logo_with_text.png)
+
+*A Swiss Army knife for chat & video chat apps.*
+
+Using **cordova-plugin-iosrtc** in our [Cordova сode samples](https://developers.connectycube.com/cordova/code-samples) for P2P and Conference calling.
+
+### [OpenVidu](https://openvidu.io)
+
+![openvidu-picture](https://openvidu.io/img/logos/openvidu_vert_grey_bg_transp_cropped.png)
+
+*Easy videoconference in your web or mobile app*
+
+Using **cordova-plugin-iosrtc** in our Ionic iOS [openvidu-ionic](https://openvidu.io/docs/tutorials/openvidu-ionic/) and [openvidu-call-ionic](https://openvidu.io/docs/demos/openvidu-call-ionic/) apps.
+
+### [Sylaps](https://sylaps.com)
+
+![sylaps-picture](https://raw.githubusercontent.com/cordova-rtc/cordova-plugin-iosrtc/master/art/sylaps-picture.png)
+
+*Instantaneous, Audio and Video meeting collaboration*
+
+At [Sylaps](https://sylaps.com) we use **cordova-plugin-iosrtc** for the iOS version of our application, becoming a web/mobile/tablet HTML5 hybrid solution.
+
+You can test the Sylaps iOS application that use iosrtc here:
+- https://apps.apple.com/us/app/sylaps/id954016392
 
 ### [eFace2Face](https://eface2face.com)
 
-![eface2face-picture](https://raw.githubusercontent.com/eface2face/cordova-plugin-iosrtc/master/art/eface2face-picture.jpg)
+![eface2face-picture](https://raw.githubusercontent.com/cordova-rtc/cordova-plugin-iosrtc/master/art/eface2face-picture.jpg)
 
 *The world's only complete web-based video calling and e-sign solution.*
 
 At [eFace2Face](https://eface2face.com) we use **cordova-plugin-iosrtc** for the iOS version of our application, becoming a web/mobile/tablet HTML5 hybrid solution.
-
-
-### [syrup](https://tastesyrup.com)
-
-![eface2face-picture](https://lh3.googleusercontent.com/yxnz9RQ5yaS-O5Xuh7E1KKn0aPCKDGCduexNtlbx1BVjEU-mU6xgbGTIbjRD68Ev9JSL8tdV4w=s141-h90-e365-rw)
-
-*Online Assistance Reinvented.*
-
-Provide a superior assistance experience to your clients with text and video chat and the ability to navigate simultaneously with your experts in the same page.
-
-At [syrup](https://tastesyrup.com) we use **cordova-plugin-iosrtc** for the iOS version of our agent application, becoming a web/mobile/tablet HTML5 hybrid solution.
 
 ### [OpenTokJS Cordova Plugin](https://github.com/aoberoi/cordova-plugin-opentokjs)
 
@@ -55,3 +76,5 @@ This is a community supported, open source project for enabling developers to us
 
 [Blink for Mobile](https://itunes.apple.com/us/app/blink-for-mobile/id1100356948?ls=1&mt=8) uses WebRTC technology to provide a rich audio and video
 experience on mobile devices.
+
+
