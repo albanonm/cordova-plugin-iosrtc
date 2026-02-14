@@ -1,51 +1,79 @@
 import Foundation
 
 
-class PluginMediaStreamTrack : NSObject, RTCMediaStreamTrackDelegate {
+class PluginMediaStreamTrack : NSObject {
 	var rtcMediaStreamTrack: RTCMediaStreamTrack
+	var originalId: String
 	var id: String
 	var kind: String
 	var eventListener: ((_ data: NSDictionary) -> Void)?
 	var eventListenerForEnded: (() -> Void)?
 	var lostStates = Array<String>()
+	var renders: [String : PluginMediaStreamRenderer]
 
-
-	init(rtcMediaStreamTrack: RTCMediaStreamTrack) {
+	init(rtcMediaStreamTrack: RTCMediaStreamTrack, trackId: String? = nil) {
 		NSLog("PluginMediaStreamTrack#init()")
 
 		self.rtcMediaStreamTrack = rtcMediaStreamTrack
-		self.id = rtcMediaStreamTrack.label  // NOTE: No "id" property provided.
-		self.kind = rtcMediaStreamTrack.kind
-	}
 
+		if (trackId == nil) {
+			self.originalId = rtcMediaStreamTrack.trackId;
+			// Handle possible duplicate remote trackId with  janus or short duplicate name
+			// See: https://github.com/cordova-rtc/cordova-plugin-iosrtc/issues/432
+			if (rtcMediaStreamTrack.trackId.count<36) {
+				self.id = rtcMediaStreamTrack.trackId + "_" + UUID().uuidString;
+			} else {
+				self.id = rtcMediaStreamTrack.trackId;
+			}
+		} else {
+			self.originalId = String();
+			self.id = trackId!;
+		}
+
+		self.kind = rtcMediaStreamTrack.kind
+		self.renders = [:]
+	}
 
 	deinit {
 		NSLog("PluginMediaStreamTrack#deinit()")
+		stop()
 	}
-
 
 	func run() {
 		NSLog("PluginMediaStreamTrack#run() [kind:%@, id:%@]", String(self.kind), String(self.id))
-
-		self.rtcMediaStreamTrack.delegate = self
 	}
 
+	func getReadyState() -> String {
+		switch self.rtcMediaStreamTrack.readyState  {
+		case RTCMediaStreamTrackState.live:
+			return "live"
+		case RTCMediaStreamTrackState.ended:
+			return "ended"
+		default:
+			return "ended"
+		}
+	}
 
-	func getJSON() -> NSDictionary {
+	func getJSON() -> [String: Any] {
 		return [
 			"id": self.id,
 			"kind": self.kind,
-			"label": self.rtcMediaStreamTrack.label,
-			"enabled": self.rtcMediaStreamTrack.isEnabled() ? true : false,
-			"readyState": PluginRTCTypes.mediaStreamTrackStates[self.rtcMediaStreamTrack.state().rawValue] as String!
+			"trackId": self.rtcMediaStreamTrack.trackId,
+			"enabled": self.rtcMediaStreamTrack.isEnabled ? true : false,
+			"capabilities": self.rtcMediaStreamTrack.capabilities,
+			"readyState": self.getReadyState()
 		]
 	}
-
 
 	func setListener(
 		_ eventListener: @escaping (_ data: NSDictionary) -> Void,
 		eventListenerForEnded: @escaping () -> Void
 	) {
+		if(self.eventListener != nil){
+			NSLog("PluginMediaStreamTrack#setListener():Error Listener already Set [kind:%@, id:%@]", String(self.kind), String(self.id));
+			return;
+		}
+
 		NSLog("PluginMediaStreamTrack#setListener() [kind:%@, id:%@]", String(self.kind), String(self.id))
 
 		self.eventListener = eventListener
@@ -55,64 +83,67 @@ class PluginMediaStreamTrack : NSObject, RTCMediaStreamTrackDelegate {
 			self.eventListener!([
 				"type": "statechange",
 				"readyState": readyState,
-				"enabled": self.rtcMediaStreamTrack.isEnabled() ? true : false
+				"enabled": self.rtcMediaStreamTrack.isEnabled ? true : false
 			])
 
 			if readyState == "ended" {
-				self.eventListenerForEnded!()
+				if(self.eventListenerForEnded != nil) {
+					self.eventListenerForEnded!()
+				}
 			}
 		}
 		self.lostStates.removeAll()
 	}
 
-
 	func setEnabled(_ value: Bool) {
 		NSLog("PluginMediaStreamTrack#setEnabled() [kind:%@, id:%@, value:%@]",
 			String(self.kind), String(self.id), String(value))
 
-		self.rtcMediaStreamTrack.setEnabled(value)
+		if (self.rtcMediaStreamTrack.isEnabled != value) {
+			self.rtcMediaStreamTrack.isEnabled = value
+			if (value) {
+				self.rtcMediaStreamTrack.videoCaptureController?.startCapture()
+			}else {
+				self.rtcMediaStreamTrack.videoCaptureController?.stopCapture()
+			}
+		}
 	}
 
+	func switchCamera() {
+		self.rtcMediaStreamTrack.videoCaptureController?.switchCamera()
+	}
 
-	// TODO: No way to stop the track.
-	// Check https://github.com/BasqueVoIPMafia/cordova-plugin-iosrtc/issues/140
+	func registerRender(render: PluginMediaStreamRenderer) {
+		if let exist = self.renders[render.id] {
+			_ = exist
+		} else {
+			self.renders[render.id] = render
+		}
+	}
+
+	func unregisterRender(render: PluginMediaStreamRenderer) {
+		self.renders.removeValue(forKey: render.id);
+	}
+
 	func stop() {
 		NSLog("PluginMediaStreamTrack#stop() [kind:%@, id:%@]", String(self.kind), String(self.id))
 
-		NSLog("PluginMediaStreamTrack#stop() | stop() not implemented (see: https://github.com/BasqueVoIPMafia/cordova-plugin-iosrtc/issues/140")
-
-		// NOTE: There is no setState() anymore
-		// self.rtcMediaStreamTrack.setState(RTCTrackStateEnded)
+		self.rtcMediaStreamTrack.videoCaptureController?.stopCapture();
 
 		// Let's try setEnabled(false), but it also fails.
-		self.rtcMediaStreamTrack.setEnabled(false)
-	}
-
-
-	/**
-	 * Methods inherited from RTCMediaStreamTrackDelegate.
-	 */
-
-
-	func mediaStreamTrackDidChange(_ rtcMediaStreamTrack: RTCMediaStreamTrack!) {
-		let state_str = PluginRTCTypes.mediaStreamTrackStates[self.rtcMediaStreamTrack.state().rawValue] as String!
-
-		NSLog("PluginMediaStreamTrack | state changed [kind:%@, id:%@, state:%@, enabled:%@]",
-			String(self.kind), String(self.id), String(describing: state_str), String(self.rtcMediaStreamTrack.isEnabled()))
-
-		if self.eventListener != nil {
+		self.rtcMediaStreamTrack.isEnabled = false
+		// eventListener could be null if the track is never used
+		if(self.eventListener != nil){
 			self.eventListener!([
 				"type": "statechange",
-				"readyState": state_str,
-				"enabled": self.rtcMediaStreamTrack.isEnabled() ? true : false
+				"readyState": "ended",
+				"enabled": self.rtcMediaStreamTrack.isEnabled ? true : false
 			])
-
-			if self.rtcMediaStreamTrack.state().rawValue == RTCTrackStateEnded.rawValue {
-				self.eventListenerForEnded!()
-			}
-		} else {
-			// It may happen that the eventListener is not yet set, so store the lost states.
-			self.lostStates.append(state_str!)
 		}
+
+		for (_, render) in self.renders {
+			render.stop()
+		}
+		self.renders.removeAll();
 	}
 }

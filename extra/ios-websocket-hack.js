@@ -6,7 +6,7 @@
  * buggy WebSocket context.
  *
  * The issue is described here:
- *   https://github.com/BasqueVoIPMafia/cordova-plugin-iosrtc/issues/12
+ *   https://github.com/cordova-rtc/cordova-plugin-iosrtc/issues/12
  *
  * USAGE:
  *
@@ -14,7 +14,6 @@
  * <script> tag. Don't do it for Android since it's useless and this script
  * deteriorates the WebSocket performance.
  */
-
 
 (function () {
 	// run on iOS Cordova only
@@ -29,15 +28,12 @@
 	window.WebSocket = FakeWebSocket;
 	window.NativeWebSocket = NativeWebSocket;
 
-
 	// Fake WebSocket class that ill override the native one.
 	function FakeWebSocket() {
-		var
-			self = this,
+		var self = this,
 			url = arguments[0],
 			protocols = arguments[1],
 			listeners = {};
-
 
 		// WebSocket is an EventTarget as per W3C spec.
 
@@ -87,13 +83,13 @@
 		};
 
 		this.dispatchEvent = function (event) {
-			var
-				self = this,
+			var self = this,
 				type,
 				listenersType,
 				dummyListener,
 				stopImmediatePropagation = false,
-				i, listener;
+				i,
+				listener;
 
 			if (!(event instanceof Event)) {
 				throw new Error('first argument must be an instance of Event');
@@ -101,7 +97,7 @@
 
 			type = event.type;
 
-			listenersType = (listeners[type] || []);
+			listenersType = listeners[type] || [];
 
 			dummyListener = this['on' + type];
 			if (typeof dummyListener === 'function') {
@@ -163,7 +159,6 @@
 			};
 		});
 	}
-
 
 	// Expose W3C WebSocket attributes and setters.
 
@@ -250,7 +245,6 @@
 			}
 		}
 	});
-
 
 	// Expose W3C WebSocket methods.
 
